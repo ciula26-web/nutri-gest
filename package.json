@@ -1,0 +1,25 @@
+{
+  "name": "nutri-gest",
+  "version": "1.0.0",
+  "description": "Gestionale Locale Pazienti, BIA & Diete per Nutrizionista",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "build:client": "cd client && npm run build",
+    "build": "cd client && npm run build",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "node dev-runner.js"
+  },
+  "keywords": [
+    "nutrizionista",
+    "dieta",
+    "bia",
+    "pazienti",
+    "antropometria",
+    "sqlite"
+  ],
+  "author": "Studio Nutrizionale",
+  "license": "ISC"
+}
