@@ -357,7 +357,7 @@ app.post('/api/patients/:patientId/visits', async (req, res) => {
     const patientId = req.params.patientId;
     const {
       visit_date, visit_type, weight, height,
-      waist_circ, hip_circ, abdomen_circ, arm_circ, thigh_circ,
+      waist_circ, hip_circ, abdomen_circ, arm_circ, thigh_circ, neck_circ,
       clinical_notes, next_appointment, bia_data
     } = req.body;
 
@@ -378,15 +378,15 @@ app.post('/api/patients/:patientId/visits', async (req, res) => {
     const visitResult = await runQuery(`
       INSERT INTO visits (
         patient_id, visit_date, visit_type, weight, height, bmi,
-        waist_circ, hip_circ, abdomen_circ, arm_circ, thigh_circ, whr,
+        waist_circ, hip_circ, abdomen_circ, arm_circ, thigh_circ, neck_circ, whr,
         clinical_notes, next_appointment
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       patientId, visit_date, visit_type || 'Controllo', Number(weight),
       patientHeight ? Number(patientHeight) : null, bmi,
       waist_circ ? Number(waist_circ) : null, hip_circ ? Number(hip_circ) : null,
       abdomen_circ ? Number(abdomen_circ) : null, arm_circ ? Number(arm_circ) : null,
-      thigh_circ ? Number(thigh_circ) : null, whr, clinical_notes || '',
+      thigh_circ ? Number(thigh_circ) : null, neck_circ ? Number(neck_circ) : null, whr, clinical_notes || '',
       next_appointment || null
     ]);
 

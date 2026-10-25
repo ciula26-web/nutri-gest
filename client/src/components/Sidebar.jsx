@@ -70,7 +70,7 @@ export default function Sidebar({
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="btn btn-secondary btn-sm"
-          style={{ width: '100%', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.05)', color: '#cbd5e1' }}
+          style={{ width: '100%', justifyContent: 'space-between' }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {darkMode ? <Sun size={15} /> : <Moon size={15} />}

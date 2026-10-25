@@ -98,8 +98,8 @@ export default function BiaView({ biaList = [], patient = null }) {
       {
         label: 'Massa Magra (FFM kg)',
         data: biaList.map(b => b.fat_free_mass_kg),
-        borderColor: '#0d9488',
-        backgroundColor: 'rgba(13, 148, 136, 0.15)',
+        borderColor: '#1e3a5f',
+        backgroundColor: 'rgba(30, 58, 95, 0.15)',
         tension: 0.3,
         fill: true
       }
@@ -209,9 +209,9 @@ export default function BiaView({ biaList = [], patient = null }) {
         </div>
 
         {/* Massa Magra FFM */}
-        <div className="bia-metric-card" style={{ borderLeft: '4px solid #0d9488' }}>
+        <div className="bia-metric-card" style={{ borderLeft: '4px solid #1e3a5f' }}>
           <div className="bia-metric-title">Massa Magra (FFM)</div>
-          <div className="bia-metric-value" style={{ color: '#0d9488' }}>
+          <div className="bia-metric-value" style={{ color: '#1e3a5f' }}>
             {latest.fat_free_mass_percent ? `${latest.fat_free_mass_percent}%` : '-'}
           </div>
           <div className="bia-metric-sub">

@@ -2,28 +2,33 @@
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Outfit', 'Inter', sans-serif;
 
-  /* Colori tema chiaro (Default) */
+  /* Colori tema chiaro (Aestethic Medico Editoriale) */
   --bg-main: #f8fafc;
   --bg-surface: #ffffff;
   --bg-surface-elevated: #ffffff;
   --bg-subtle: #f1f5f9;
   --bg-hover: #e2e8f0;
 
-  --sidebar-bg: #0f172a;
-  --sidebar-text: #e2e8f0;
-  --sidebar-text-muted: #94a3b8;
-  --sidebar-active-bg: rgba(20, 184, 166, 0.15);
-  --sidebar-active-text: #2dd4bf;
-  --sidebar-border: #1e293b;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #1e293b;
+  --sidebar-text-muted: #64748b;
+  --sidebar-active-bg: #f0f4fa;
+  --sidebar-active-text: #1e3a5f;
+  --sidebar-border: #e2e8f0;
 
-  --primary: #0d9488;
-  --primary-hover: #0f766e;
-  --primary-light: #f0fdfa;
-  --primary-border: #99f6e4;
-  --primary-glow: rgba(13, 148, 136, 0.25);
+  --primary: #1e3a5f;
+  --primary-hover: #152c48;
+  --primary-light: #f0f4fa;
+  --primary-border: #cbd5e1;
+  --primary-glow: rgba(30, 58, 95, 0.18);
 
-  --secondary: #6366f1;
-  --secondary-light: #eef2ff;
+  --accent-botanical: #8b9cb5;
+  --accent-botanical-dark: #64748b;
+  --font-serif: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --font-classic: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+
+  --secondary: #3b6998;
+  --secondary-light: #edf3f9;
 
   --accent-cyan: #0284c7;
   --accent-cyan-light: #f0f9ff;
@@ -46,7 +51,7 @@
   --text-inverse: #ffffff;
 
   --border-light: #e2e8f0;
-  --border-focus: #0d9488;
+  --border-focus: #1e3a5f;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.05);
@@ -72,10 +77,13 @@
   --bg-subtle: #1e293b;
   --bg-hover: #26334d;
 
-  --sidebar-bg: #090e1a;
-  --sidebar-text: #f1f5f9;
+  /* Menu e Sidebar sempre bianchi come da richiesta utente */
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #1e293b;
   --sidebar-text-muted: #64748b;
-  --sidebar-border: #162035;
+  --sidebar-active-bg: #f0f4fa;
+  --sidebar-active-text: #1e3a5f;
+  --sidebar-border: #e2e8f0;
 
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
@@ -157,18 +165,18 @@ a {
   width: 42px;
   height: 42px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b6998 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.4);
 }
 
 .brand-text h1 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #1e3a5f;
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -177,7 +185,7 @@ a {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #2dd4bf;
+  color: #64748b;
   font-weight: 600;
 }
 
@@ -208,15 +216,15 @@ a {
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
+  background-color: #f1f5fa;
+  color: #1e3a5f;
 }
 
 .nav-link.active {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-active-text);
   font-weight: 600;
-  box-shadow: inset 3px 0 0 0 #2dd4bf;
+  box-shadow: inset 3px 0 0 0 #1e3a5f;
 }
 
 .sidebar-footer {
@@ -231,8 +239,9 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-sm);
 }
 
@@ -240,7 +249,7 @@ a {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #14b8a6;
+  background: #1e3a5f;
   color: white;
   display: flex;
   align-items: center;
@@ -258,7 +267,7 @@ a {
 .doctor-name {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: #1e293b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -283,7 +292,7 @@ a {
 
 .top-bar {
   height: 68px;
-  background-color: var(--bg-surface);
+  background-color: #ffffff;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
@@ -676,6 +685,7 @@ a {
 
 .modal-header {
   padding: 20px 24px;
+  background-color: #ffffff;
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
@@ -708,6 +718,12 @@ a {
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -753,51 +769,130 @@ a {
 }
 
 /* ==========================================
-   STAMPA PDF (LAYOUT MEDICO A4)
+   STAMPA PDF PROFESSIONALE A4 (IDENTICA AL PDF CLINICO)
    ========================================== */
+.pdf-sheet-container {
+  background-color: #cbd5e1;
+  padding: 30px 16px;
+  overflow-y: auto;
+  max-height: calc(92vh - 120px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.pdf-a4-page {
+  background-color: #ffffff;
+  color: #1e293b;
+  width: 100%;
+  max-width: 794px;
+  min-height: 1123px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  padding: 60px 75px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+  font-family: var(--font-family);
+  transition: transform 0.2s ease;
+}
+
 @media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-size: 10pt !important;
+  @page {
+    size: A4 portrait;
+    margin: 10mm 14mm 10mm 14mm;
   }
 
-  .sidebar, .top-bar, .no-print, button, .btn {
+  html, body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-family: var(--font-family) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* NASCONDI COMPLETAMENTE L'INTERA APPLICAZIONE SOTTOSTANTE (#root): nessun campo, input o form viene stampato */
+  #root,
+  .app-container,
+  .main-wrapper,
+  .content-body,
+  .sidebar,
+  .top-bar,
+  .no-print,
+  button,
+  .btn,
+  form {
     display: none !important;
   }
 
-  .app-container {
+  /* MOSTRA ESCLUSIVAMENTE IL PORTALE DELLA DIETA */
+  #diet-print-portal {
     display: block !important;
-  }
-
-  .main-wrapper {
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  .content-body {
-    padding: 0 !important;
-    max-width: 100% !important;
-  }
-
-  .card {
-    box-shadow: none !important;
-    border: 1px solid #ddd !important;
-    page-break-inside: avoid;
-    margin-bottom: 15px !important;
-  }
-
-  .diet-print-header {
+  #diet-print-portal .modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
     display: block !important;
-    border-bottom: 2px solid #0d9488 !important;
-    padding-bottom: 12px !important;
-    margin-bottom: 20px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
   }
 
-  .diet-day-print-card {
+  #diet-print-portal .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  #diet-print-portal .pdf-sheet-container {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    max-height: none !important;
+    gap: 0 !important;
+    display: block !important;
+  }
+
+  .pdf-a4-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 275mm !important;
+    height: auto !important;
+    page-break-after: always !important;
+    break-after: page !important;
     page-break-inside: avoid !important;
-    margin-bottom: 14px !important;
-    border: 1px solid #ccc !important;
-    padding: 10px !important;
+    break-inside: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 0 0 0 !important;
+    padding: 6mm 4mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+  }
+
+  .pdf-a4-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }

@@ -155,9 +155,9 @@ export default function PatientDetail({
       {
         label: 'Peso Rilevato (kg)',
         data: weightValues,
-        borderColor: '#0d9488',
-        backgroundColor: 'rgba(13, 148, 136, 0.1)',
-        pointBackgroundColor: '#0d9488',
+        borderColor: '#1e3a5f',
+        backgroundColor: 'rgba(30, 58, 95, 0.1)',
+        pointBackgroundColor: '#1e3a5f',
         pointRadius: 6,
         pointHoverRadius: 8,
         tension: 0.25,
@@ -476,9 +476,21 @@ export default function PatientDetail({
                           {getBmiBadge(v.bmi)}
                         </td>
                         <td>
-                          {v.waist_circ ? `${v.waist_circ} cm` : '-'}
-                          {v.hip_circ ? ` / ${v.hip_circ} cm` : ''}
-                          {v.whr ? ` (WHR: ${v.whr})` : ''}
+                          <div>
+                            {v.waist_circ ? `${v.waist_circ} cm` : '-'}
+                            {v.hip_circ ? ` / ${v.hip_circ} cm` : ''}
+                            {v.whr ? ` (WHR: ${v.whr})` : ''}
+                          </div>
+                          {(v.abdomen_circ || v.thigh_circ || v.arm_circ || v.neck_circ) && (
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: '1.2' }}>
+                              {[
+                                v.abdomen_circ && `Addome: ${v.abdomen_circ}`,
+                                v.thigh_circ && `Coscia: ${v.thigh_circ}`,
+                                v.arm_circ && `Bicipite: ${v.arm_circ}`,
+                                v.neck_circ && `Collo: ${v.neck_circ}`
+                              ].filter(Boolean).join(' • ')} cm
+                            </div>
+                          )}
                         </td>
                         <td style={{ maxWidth: '250px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                           {v.clinical_notes || '-'}

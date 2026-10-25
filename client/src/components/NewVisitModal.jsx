@@ -11,9 +11,9 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
     height: patient?.height || '',
     waist_circ: '',
     hip_circ: '',
-    abdomen_circ: '',
     arm_circ: '',
     thigh_circ: '',
+    neck_circ: '',
     clinical_notes: '',
     next_appointment: ''
   });
@@ -98,7 +98,7 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <div className="modal-body">
-            
+
             {/* Riga 1: Data e Tipo Visita */}
             <div className="form-row">
               <div className="form-group">
@@ -123,8 +123,7 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
                 >
                   <option value="Prima Visita">Prima Visita</option>
                   <option value="Controllo">Controllo di Routine</option>
-                  <option value="Valutazione intermedia">Valutazione Intermedia</option>
-                  <option value="Conclusione">Conclusione Percorso</option>
+
                 </select>
               </div>
 
@@ -200,7 +199,7 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
               <div style={{ fontSize: '0.84rem', fontWeight: '700', marginBottom: '10px', color: 'var(--text-secondary)' }}>
                 Circonferenze Corporee (cm)
               </div>
-              <div className="form-row">
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Vita (cm)</label>
                   <input
@@ -227,22 +226,49 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
                   />
                 </div>
 
+
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Addome (cm)</label>
+                  <label className="form-label">Coscia (cm)</label>
                   <input
                     type="number"
                     step="0.5"
-                    name="abdomen_circ"
-                    value={visitData.abdomen_circ}
+                    name="thigh_circ"
+                    value={visitData.thigh_circ}
                     onChange={handleVisitChange}
-                    placeholder="es. 82"
+                    placeholder="es. 54"
                     className="form-control"
                   />
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">WHR (Rapporto Vita/Fianchi)</label>
-                  <div style={{ padding: '10px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  <label className="form-label">Bicipite (cm)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    name="arm_circ"
+                    value={visitData.arm_circ}
+                    onChange={handleVisitChange}
+                    placeholder="es. 28"
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Collo (cm)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    name="neck_circ"
+                    value={visitData.neck_circ}
+                    onChange={handleVisitChange}
+                    placeholder="es. 36"
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">WHR (Vita/Fianchi)</label>
+                  <div style={{ padding: '8px 10px', fontWeight: '700', color: 'var(--text-primary)', background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', textAlign: 'center' }}>
                     {currentWhr || '-'}
                   </div>
                 </div>

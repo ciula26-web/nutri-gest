@@ -10,7 +10,8 @@
     "build": "cd client && npm run build",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
-    "dev": "node dev-runner.js"
+    "dev": "node dev-runner.js",
+    "watch": "node dev-runner.js"
   },
   "keywords": [
     "nutrizionista",

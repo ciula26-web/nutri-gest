@@ -108,6 +108,7 @@ const initDatabase = async () => {
       abdomen_circ REAL,
       arm_circ REAL,
       thigh_circ REAL,
+      neck_circ REAL,
       whr REAL,
       clinical_notes TEXT DEFAULT '',
       next_appointment TEXT,
@@ -225,6 +226,17 @@ const initDatabase = async () => {
       'P.IVA 09876543210',
       'Iscrizione ONB n. AA_012345'
     ]);
+  }
+
+  // Migrazione automatica: aggiungi colonna neck_circ se tabella visits già esiste
+  try {
+    const visitsCols = await getAll(`PRAGMA table_info(visits)`);
+    if (visitsCols && visitsCols.length > 0 && !visitsCols.some(col => col.name === 'neck_circ')) {
+      await runQuery(`ALTER TABLE visits ADD COLUMN neck_circ REAL;`);
+      console.log('Migrazione completata: colonna neck_circ aggiunta alla tabella visits.');
+    }
+  } catch (err) {
+    console.error('Info migrazione neck_circ:', err.message);
   }
 
   // Verifica se è necessario inserire i dati demo

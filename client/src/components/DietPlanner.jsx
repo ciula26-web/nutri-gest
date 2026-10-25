@@ -12,10 +12,12 @@ import {
   Sparkles,
   Info,
   ChevronRight,
-  BookmarkPlus
+  Share2,
+  FileText
 } from 'lucide-react';
 import { api } from '../api';
-import DietPrintModal from './DietPrintModal';
+import DietPrintModal, { initializePlanData } from './DietPrintModal';
+import { exportDietToWord } from '../utils/exportWord';
 
 export default function DietPlanner({
   patient,
@@ -166,6 +168,259 @@ export default function DietPlanner({
     setIsEditing(true);
   };
 
+  // Carica il modello esatto estratto dal PDF (2200 kcal)
+  const handleLoadPdfModelDiet = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setDietForm({
+      title: 'Piano Alimentare Personalizzato (2200 kcal)',
+      start_date: today,
+      end_date: '',
+      target_calories: 2200,
+      macronutrients: { carb: 50, prot: 20, fat: 30 },
+      is_active: 1,
+      water_intake_recommendation: "Non aspettare di avere sete per bere: idratarsi con almeno 2L d'acqua al giorno.",
+      general_recommendations: "Ascolta il tuo corpo. Gestisci gli sgarri senza sensi di colpa. Puoi invertire i pasti nella giornata o i giorni della settimana.",
+      physical_activity_recommendations: "Durante l'allenamento sciogli in 1L di acqua 2g di magnesio e potassio. Segui il timing pre/post workout.",
+      supplements: 'Magnesio e Potassio 2g in borraccia',
+      notes: '',
+      days: [
+        {
+          day_of_week: 1,
+          day_name: 'Lunedì',
+          notes: '150g di petto di pollo/tacchino/maiale: al limone, all’arancia, al latte, panato, infarinato e cotto con olio e rosmarino, tritato e poi panato (come cotolette e nuggets)',
+          meals: [
+            {
+              meal_type: 'Colazione',
+              time_suggestion: '07:30',
+              items: [
+                { food: 'Yogurt Muller con palline di cioccolato', qty: '125g' },
+                { food: 'Fette biscottate integrali o 3 biscotti OSWEGO senza zuccheri', qty: '3 fette' },
+                { food: 'Nutella (circa 3 cucchiaini da caffè rasi)', qty: '15g' }
+              ],
+              notes: ''
+            },
+            {
+              meal_type: 'Spuntino Mattina',
+              time_suggestion: '10:30',
+              items: [
+                { food: 'Pane', qty: '60g' },
+                { food: 'Bresaola / prosciutto cotto o crudo', qty: '40g' }
+              ],
+              notes: 'Spuntino a scuola'
+            },
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:00',
+              items: [
+                { food: 'Pasta*¹', qty: '100g' },
+                { food: 'Petto di pollo*²', qty: '200g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '2 cucchiaini (10g)' }
+              ],
+              notes: '*¹ Sostituzioni: 150g pane, 80g pasta+30g pane. *² Sostituzioni: petto di tacchino, coniglio, filetto/arista di maiale'
+            },
+            {
+              meal_type: 'Merenda Pomeriggio',
+              time_suggestion: '16:30',
+              items: [
+                { food: 'Noci o nocciole', qty: '20g' },
+                { food: 'Frutto fresco', qty: '1 frutto' }
+              ],
+              notes: ''
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:00',
+              items: [
+                { food: 'Piadina all’olio di oliva', qty: '120g circa' },
+                { food: 'Bresaola / prosciutto crudo o cotto', qty: '40g' },
+                { food: 'Philadelphia light, stracchino o crescenza', qty: '35g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' }
+              ],
+              notes: ''
+            }
+          ]
+        },
+        {
+          day_of_week: 2,
+          day_name: 'Martedì',
+          notes: '',
+          meals: [
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:00',
+              items: [
+                { food: 'Gnocchi di patate', qty: '200g' },
+                { food: 'Macinato di manzo magro', qty: '150g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '2 cucchiaini (10g)' }
+              ],
+              notes: ''
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:00',
+              items: [
+                { food: 'Pane*¹', qty: '150g' },
+                { food: 'Mozzarella light (intera)', qty: '125g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '2 cucchiaini (10g)' }
+              ],
+              notes: '*¹ Sostituzioni: 100g pasta, 80g pasta+30g pane'
+            }
+          ]
+        },
+        {
+          day_of_week: 3,
+          day_name: 'Mercoledì',
+          notes: '150g di petto di pollo/tacchino/maiale: al limone, all’arancia, al latte, panato, infarinato e cotto con olio e rosmarino, tritato e poi panato (come cotolette e nuggets)',
+          meals: [
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:00',
+              items: [
+                { food: 'Pasta*¹', qty: '100g' },
+                { food: 'Uova intere', qty: '2 uova' },
+                { food: 'Guanciale', qty: '30g' },
+                { food: 'Parmigiano Reggiano', qty: '1 cucchiaio' },
+                { food: 'Frutta e verdura', qty: 'A volontà' }
+              ],
+              notes: '*¹ Sostituzioni: 100g pasta, 80g pasta+30g pane'
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:00',
+              items: [
+                { food: 'Pane*¹', qty: '150g' },
+                { food: 'Petto di pollo*²', qty: '200g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '2 cucchiaini (10g)' }
+              ],
+              notes: '*¹ Sostituzioni: 100g pasta, 80g pasta+30g pane. *² Sostituzioni: petto di tacchino, coniglio, filetto/arista di maiale'
+            }
+          ]
+        },
+        {
+          day_of_week: 4,
+          day_name: 'Giovedì',
+          notes: '',
+          meals: [
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:00',
+              items: [
+                { food: 'Pasta*¹', qty: '100g' },
+                { food: 'Tonno fresco/congelato o in scatola al naturale', qty: '100g (56gx2)' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '3 cucchiaini (15g)' }
+              ],
+              notes: '*¹ Sostituzioni: 150g pane, 80g pasta+30g pane'
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:00',
+              items: [
+                { food: 'Pane*¹', qty: '150g' },
+                { food: 'Filetto di vitello', qty: '150g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '3 cucchiaini (15g)' }
+              ],
+              notes: '*¹ Sostituzioni: 100g pasta, 80g pasta+30g pane'
+            }
+          ]
+        },
+        {
+          day_of_week: 5,
+          day_name: 'Venerdì',
+          notes: '150g di macinato di manzo: hamburger (fatto in casa), pasta al ragù, macinato con pomodoro da mangiare con il pane',
+          meals: [
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:00',
+              items: [
+                { food: 'Gnocchi di patate', qty: '200g' },
+                { food: 'Petto di pollo*¹', qty: '150g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '2 cucchiaini (10g)' }
+              ],
+              notes: '*¹ Sostituzioni: petto di tacchino, coniglio, filetto/arista di maiale'
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:00',
+              items: [
+                { food: 'Pane*¹', qty: '150g' },
+                { food: 'Macinato di manzo magro', qty: '150g' },
+                { food: 'Frutta e verdura', qty: 'A volontà' },
+                { food: 'Olio extravergine d\'oliva', qty: '2 cucchiaini (10g)' }
+              ],
+              notes: '*¹ Sostituzioni: 100g pasta, 80g pasta+30g pane'
+            }
+          ]
+        },
+        {
+          day_of_week: 6,
+          day_name: 'Sabato',
+          notes: 'Gusta il pasto conviviale con tranquillità, masticando lentamente.',
+          meals: [
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:30',
+              items: [
+                { food: 'Riso basmati o couscous', qty: '100g' },
+                { food: 'Trancio di salmone o pesce spada', qty: '180g' },
+                { food: 'Verdure alla griglia', qty: 'A piacere' },
+                { food: 'Olio EVO', qty: '2 cucchiaini' }
+              ],
+              notes: '*¹ Sostituzioni: 120g pasta o 150g pane'
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:30',
+              items: [
+                { food: 'Pasto libero concordato (es. Pizza margherita o con verdure)', qty: '1 porzione' },
+                { food: 'Acqua naturale a volontà', qty: 'Abbondante' },
+                { food: 'Frutta fresca o sorbetto al limone', qty: '1 porzione' }
+              ],
+              notes: ''
+            }
+          ]
+        },
+        {
+          day_of_week: 7,
+          day_name: 'Domenica',
+          notes: '',
+          meals: [
+            {
+              meal_type: 'Pranzo',
+              time_suggestion: '13:00',
+              items: [
+                { food: 'Pasta al forno o risotto ai funghi', qty: '100g' },
+                { food: 'Arrosto di vitello o tacchino', qty: '150g' },
+                { food: 'Insalata mista e carote', qty: 'A piacere' },
+                { food: 'Olio EVO', qty: '2 cucchiaini' }
+              ],
+              notes: ''
+            },
+            {
+              meal_type: 'Cena',
+              time_suggestion: '20:00',
+              items: [
+                { food: 'Vellutata di verdure o minestrone', qty: '1 porzione' },
+                { food: 'Ricotta fresca o 2 uova in camicia', qty: '100g' },
+                { food: 'Pane integrale tostato', qty: '60g' },
+                { food: 'Olio EVO', qty: '1 cucchiaino' }
+              ],
+              notes: ''
+            }
+          ]
+        }
+      ]
+    });
+    setActiveDiet(null);
+    setIsEditing(true);
+  };
+
   // Modifica pasto nel giorno corrente
   const updateMealFood = (dayIdx, mealIdx, foodIdx, field, value) => {
     setDietForm(prev => {
@@ -298,6 +553,55 @@ export default function DietPlanner({
     }
   };
 
+  // Esporta direttamente in Microsoft Word (.docx)
+  const handleExportWordDirect = async () => {
+    try {
+      const planData = initializePlanData(activeDiet || dietForm, currentPatient);
+      const blob = await exportDietToWord(planData, currentPatient, settings);
+      const safeName = (planData.patient_name || 'Paziente').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileName = `Piano_Alimentare_${safeName}_${planData.target_calories || 2200}kcal.docx`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Errore esportazione Word:', err);
+      alert('Errore esportazione Word: ' + err.message);
+    }
+  };
+
+  // Salva le modifiche apportate direttamente nella modale anteprima
+  const handleDirectDietSave = (updatedPlan) => {
+    setDietForm(prev => ({
+      ...prev,
+      target_calories: updatedPlan.target_calories || prev.target_calories,
+      macronutrients: updatedPlan.macronutrients || prev.macronutrients,
+      start_date: updatedPlan.start_date || prev.start_date,
+      end_date: updatedPlan.end_date || prev.end_date,
+      recommendations: updatedPlan.recommendations,
+      cooking_tips: updatedPlan.cooking_tips,
+      colazione_spuntini: updatedPlan.colazione_spuntini,
+      sport_timing: updatedPlan.sport_timing
+    }));
+    if (activeDiet) {
+      setActiveDiet(prev => ({
+        ...prev,
+        target_calories: updatedPlan.target_calories || prev.target_calories,
+        macronutrients: updatedPlan.macronutrients || prev.macronutrients,
+        start_date: updatedPlan.start_date || prev.start_date,
+        end_date: updatedPlan.end_date || prev.end_date,
+        recommendations: updatedPlan.recommendations,
+        cooking_tips: updatedPlan.cooking_tips,
+        colazione_spuntini: updatedPlan.colazione_spuntini,
+        sport_timing: updatedPlan.sport_timing
+      }));
+    }
+  };
+
   // Paziente selezionato
   const currentPatient = patients.find(p => p.id === Number(selectedPatientId)) || patient;
 
@@ -360,16 +664,49 @@ export default function DietPlanner({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => setIsPrintModalOpen(true)}
+            className="btn btn-outline-primary btn-sm"
+            style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Printer size={15} />
+            <span>Anteprima & Stampa PDF (A4 Ufficiale)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportWordDirect}
+            className="btn btn-secondary btn-sm"
+            style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', color: '#1d4ed8', borderColor: '#93c5fd', backgroundColor: '#ffffff' }}
+            title="Scarica il piano alimentare in formato Microsoft Word (.docx) per modificarlo con Word o LibreOffice"
+          >
+            <FileText size={15} />
+            <span>Scarica Word (.docx)</span>
+          </button>
+
+          <button
+            onClick={() => setIsPrintModalOpen(true)}
+            className="btn btn-secondary btn-sm"
+            style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Condividi il file PDF del piano alimentare con il paziente (WhatsApp, Email, App)"
+          >
+            <Share2 size={15} />
+            <span>Condividi PDF</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLoadPdfModelDiet}
+            className="btn btn-secondary btn-sm"
+            title="Carica la dieta 2200 kcal identica al PDF di riferimento"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Sparkles size={14} style={{ color: 'var(--primary)' }} />
+            <span>Carica Modello PDF (2200 kcal)</span>
+          </button>
+
           {activeDiet && !isEditing && (
             <>
-              <button
-                onClick={() => setIsPrintModalOpen(true)}
-                className="btn btn-outline-primary btn-sm"
-              >
-                <Printer size={15} />
-                <span>Anteprima & Stampa PDF</span>
-              </button>
-
               <button
                 onClick={handleDuplicate}
                 className="btn btn-secondary btn-sm"
@@ -769,9 +1106,10 @@ export default function DietPlanner({
       <DietPrintModal
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
-        diet={activeDiet}
+        diet={activeDiet || dietForm}
         patient={currentPatient}
         settings={settings}
+        onSaveDiet={handleDirectDietSave}
       />
     </div>
   );
