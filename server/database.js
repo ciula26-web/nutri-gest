@@ -80,13 +80,22 @@ const initDatabase = async () => {
       initial_weight REAL,
       target_weight REAL,
       goal_description TEXT,
-      activity_level TEXT DEFAULT 'moderata',
+      activity_level TEXT DEFAULT '1-2 volte a settimana',
+      sport_type TEXT DEFAULT '',
+      daily_steps TEXT DEFAULT '0 - 5.000 passi/giorno',
       allergies TEXT DEFAULT '',
       intolerances TEXT DEFAULT '',
       pathologies TEXT DEFAULT '',
       medications TEXT DEFAULT '',
       lifestyle_notes TEXT DEFAULT '',
       food_preferences TEXT DEFAULT '',
+      menstrual_cycle TEXT DEFAULT '',
+      pregnancy_lactation TEXT DEFAULT '',
+      childbirth_history TEXT DEFAULT '',
+      menopause TEXT DEFAULT '',
+      questionnaire_json TEXT DEFAULT '{}',
+      privacy_pdf_name TEXT DEFAULT '',
+      privacy_pdf_date TEXT DEFAULT '',
       status TEXT DEFAULT 'attivo',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -237,6 +246,45 @@ const initDatabase = async () => {
     }
   } catch (err) {
     console.error('Info migrazione neck_circ:', err.message);
+  }
+
+  // Migrazione automatica: aggiungi colonne sport_type e daily_steps se tabella patients già esiste
+  try {
+    const patientsCols = await getAll(`PRAGMA table_info(patients)`);
+    if (patientsCols && patientsCols.length > 0) {
+      if (!patientsCols.some(col => col.name === 'sport_type')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN sport_type TEXT DEFAULT '';`);
+        console.log('Migrazione completata: colonna sport_type aggiunta alla tabella patients.');
+      }
+      if (!patientsCols.some(col => col.name === 'daily_steps')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN daily_steps TEXT DEFAULT '0 - 5.000 passi/giorno';`);
+        console.log('Migrazione completata: colonna daily_steps aggiunta alla tabella patients.');
+      }
+      if (!patientsCols.some(col => col.name === 'menstrual_cycle')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN menstrual_cycle TEXT DEFAULT '';`);
+      }
+      if (!patientsCols.some(col => col.name === 'pregnancy_lactation')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN pregnancy_lactation TEXT DEFAULT '';`);
+      }
+      if (!patientsCols.some(col => col.name === 'childbirth_history')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN childbirth_history TEXT DEFAULT '';`);
+      }
+      if (!patientsCols.some(col => col.name === 'menopause')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN menopause TEXT DEFAULT '';`);
+      }
+      if (!patientsCols.some(col => col.name === 'questionnaire_json')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN questionnaire_json TEXT DEFAULT '{}';`);
+        console.log('Migrazione completata: colonna questionnaire_json aggiunta alla tabella patients.');
+      }
+      if (!patientsCols.some(col => col.name === 'privacy_pdf_name')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN privacy_pdf_name TEXT DEFAULT '';`);
+      }
+      if (!patientsCols.some(col => col.name === 'privacy_pdf_date')) {
+        await runQuery(`ALTER TABLE patients ADD COLUMN privacy_pdf_date TEXT DEFAULT '';`);
+      }
+    }
+  } catch (err) {
+    console.error('Info migrazione patients activity:', err.message);
   }
 
   // Verifica se è necessario inserire i dati demo

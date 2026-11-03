@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Scale, Activity, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaultDate = '' }) {
@@ -40,6 +40,17 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
     basal_metabolic_rate: '',
     bia_vector_notes: ''
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   UtensilsCrossed,
   Plus,
@@ -13,9 +13,13 @@ import {
   Info,
   ChevronRight,
   Share2,
-  FileText
+  FileText,
+  Search,
+  User,
+  X
 } from 'lucide-react';
 import { api } from '../api';
+import { showPopup, showConfirm } from '../utils/popup';
 import DietPrintModal, { initializePlanData } from './DietPrintModal';
 import { exportDietToWord } from '../utils/exportWord';
 
@@ -26,6 +30,9 @@ export default function DietPlanner({
   settings
 }) {
   const [selectedPatientId, setSelectedPatientId] = useState(patient?.id || (patients[0]?.id || ''));
+  const [patientSearch, setPatientSearch] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchBoxRef = useRef(null);
   const [diets, setDiets] = useState([]);
   const [activeDiet, setActiveDiet] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0); // 0 = Lunedì, 6 = Domenica
@@ -99,6 +106,17 @@ export default function DietPlanner({
     }
     loadTemplates();
   }, [selectedPatientId]);
+
+  // Chiudi i risultati di ricerca paziente cliccando fuori
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadTemplates = async () => {
     try {
@@ -482,12 +500,16 @@ export default function DietPlanner({
       });
       return { ...prev, days: newDays };
     });
-    alert('Schema di Lunedì copiato con successo su Martedì, Mercoledì, Giovedì e Venerdì!');
+    showPopup('Schema di Lunedì copiato con successo su Martedì, Mercoledì, Giovedì e Venerdì!', 'success', 'Schema Copiato');
   };
 
   // Carica da Modello
-  const applyTemplate = (template) => {
-    if (confirm(`Vuoi applicare il modello "${template.name}"? I pasti correnti verranno sostituiti con quelli del modello.`)) {
+  const applyTemplate = async (template) => {
+    const confirmed = await showConfirm(
+      `Vuoi applicare il modello "${template.name}"? I pasti correnti verranno sostituiti con quelli del modello.`,
+      { title: 'Applica Modello', confirmText: 'Applica', danger: false }
+    );
+    if (confirmed) {
       setDietForm(prev => ({
         ...prev,
         title: template.name,
@@ -501,6 +523,7 @@ export default function DietPlanner({
           }))
         }))
       }));
+      showPopup(`Modello "${template.name}" applicato con successo!`, 'success', 'Modello Applicato');
     }
   };
 
@@ -508,7 +531,7 @@ export default function DietPlanner({
   const handleSaveDiet = async (e) => {
     e.preventDefault();
     if (!dietForm.title || !dietForm.start_date) {
-      alert('Titolo e Data inizio sono obbligatori.');
+      showPopup('Titolo e Data inizio sono obbligatori.', 'warning');
       return;
     }
 
@@ -516,17 +539,17 @@ export default function DietPlanner({
       if (activeDiet?.id && isEditing) {
         // Aggiorna esistente
         await api.updateDiet(activeDiet.id, dietForm);
-        alert('Piano alimentare aggiornato con successo!');
+        showPopup('Piano alimentare aggiornato con successo!', 'success', 'Piano Salvato');
         loadDietDetails(activeDiet.id);
       } else {
         // Crea nuova
-        const res = await api.createDiet(selectedPatientId, dietForm);
-        alert('Nuovo piano alimentare creato con successo!');
+        await api.createDiet(selectedPatientId, dietForm);
+        showPopup('Nuovo piano alimentare creato con successo!', 'success', 'Piano Creato');
         loadPatientDiets(selectedPatientId);
       }
       setIsEditing(false);
     } catch (err) {
-      alert('Errore durante il salvataggio: ' + err.message);
+      showPopup('Errore durante il salvataggio: ' + err.message, 'error');
     }
   };
 
@@ -535,21 +558,26 @@ export default function DietPlanner({
     if (!activeDiet?.id) return;
     try {
       const res = await api.duplicateDiet(activeDiet.id);
-      alert('Piano duplicato con successo!');
+      showPopup('Piano duplicato con successo!', 'success', 'Piano Duplicato');
       loadPatientDiets(selectedPatientId);
       loadDietDetails(res.id);
       setIsEditing(true);
     } catch (err) {
-      alert('Errore duplicazione: ' + err.message);
+      showPopup('Errore duplicazione: ' + err.message, 'error');
     }
   };
 
   // Elimina dieta
   const handleDelete = async () => {
     if (!activeDiet?.id) return;
-    if (confirm('Sei sicuro di voler eliminare questo piano alimentare?')) {
+    const confirmed = await showConfirm(
+      'Sei sicuro di voler eliminare questo piano alimentare?',
+      { title: 'Elimina Piano Alimentare', confirmText: 'Elimina', danger: true }
+    );
+    if (confirmed) {
       await api.deleteDiet(activeDiet.id);
       loadPatientDiets(selectedPatientId);
+      showPopup('Piano alimentare eliminato con successo.', 'success', 'Piano Eliminato');
     }
   };
 
@@ -605,26 +633,189 @@ export default function DietPlanner({
   // Paziente selezionato
   const currentPatient = patients.find(p => p.id === Number(selectedPatientId)) || patient;
 
+  // Filtro ricerca pazienti
+  const filteredPatients = patients.filter(p => {
+    if (!patientSearch.trim()) return true;
+    const q = patientSearch.toLowerCase().trim();
+    const fullName = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase();
+    const revName = `${p.last_name || ''} ${p.first_name || ''}`.toLowerCase();
+    const cf = (p.fiscal_code || '').toLowerCase();
+    const phone = (p.phone || '').toLowerCase();
+    return fullName.includes(q) || revName.includes(q) || cf.includes(q) || phone.includes(q);
+  });
+
   return (
     <div className="diet-planner-view">
-      {/* Barra selezione paziente se aperto da menu laterale */}
+      {/* Barra ricerca paziente se aperto da menu laterale */}
       {!patient && patients.length > 0 && (
-        <div className="card" style={{ marginBottom: '20px', padding: '14px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>Paziente:</span>
-              <select
-                value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(e.target.value)}
-                className="form-control"
-                style={{ width: 'auto', minWidth: '240px' }}
-              >
-                {patients.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.last_name} {p.first_name} {p.has_active_diet ? '(Dieta attiva)' : ''}
-                  </option>
-                ))}
-              </select>
+        <div className="card" style={{ marginBottom: '20px', padding: '14px 20px', overflow: 'visible' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 420px', flexWrap: 'wrap' }}>
+              <div ref={searchBoxRef} style={{ position: 'relative', flex: '1 1 280px', maxWidth: '420px' }}>
+                <Search
+                  size={17}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-muted)',
+                    pointerEvents: 'none'
+                  }}
+                />
+                <input
+                  type="text"
+                  value={patientSearch}
+                  onFocus={() => setIsSearchOpen(true)}
+                  onChange={(e) => {
+                    setPatientSearch(e.target.value);
+                    setIsSearchOpen(true);
+                  }}
+                  placeholder="Cerca paziente per nome, cognome o CF..."
+                  className="form-control"
+                  style={{ paddingLeft: '38px', paddingRight: patientSearch ? '34px' : '14px' }}
+                />
+                {patientSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPatientSearch('');
+                      setIsSearchOpen(true);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '2px'
+                    }}
+                    title="Pulisci ricerca"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+
+                {/* Risultati della ricerca paziente */}
+                {isSearchOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'var(--bg-surface)',
+                      border: '1px solid var(--border-light)',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-lg)',
+                      maxHeight: '260px',
+                      overflowY: 'auto',
+                      zIndex: 60
+                    }}
+                  >
+                    {filteredPatients.length === 0 ? (
+                      <div style={{ padding: '12px 14px', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                        Nessun paziente trovato per "{patientSearch}"
+                      </div>
+                    ) : (
+                      filteredPatients.map(p => {
+                        const isSelected = Number(selectedPatientId) === p.id;
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              setSelectedPatientId(p.id);
+                              setPatientSearch('');
+                              setIsSearchOpen(false);
+                            }}
+                            style={{
+                              padding: '10px 14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '10px',
+                              cursor: 'pointer',
+                              backgroundColor: isSelected ? 'var(--primary-light)' : 'transparent',
+                              borderBottom: '1px solid var(--border-light)',
+                              transition: 'background-color 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--bg-subtle)';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div
+                                style={{
+                                  width: '30px',
+                                  height: '30px',
+                                  borderRadius: '50%',
+                                  backgroundColor: p.gender === 'M' ? '#0284c7' : '#0d9488',
+                                  color: '#ffffff',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  fontSize: '0.75rem',
+                                  flexShrink: 0
+                                }}
+                              >
+                                {p.first_name?.[0]}{p.last_name?.[0]}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                                  {p.last_name} {p.first_name}
+                                </div>
+                                {p.fiscal_code && (
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                                    {p.fiscal_code}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {p.has_active_diet && (
+                              <span className="badge badge-success" style={{ fontSize: '0.68rem', padding: '2px 7px' }}>
+                                Dieta attiva
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Badge Paziente Attualmente Selezionato */}
+              {currentPatient && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '7px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--primary-light)',
+                    border: '1px solid var(--primary-border)',
+                    color: 'var(--primary)',
+                    fontSize: '0.86rem',
+                    fontWeight: 600
+                  }}
+                >
+                  <User size={15} />
+                  <span>
+                    Paziente: <strong>{currentPatient.last_name} {currentPatient.first_name}</strong>
+                  </span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

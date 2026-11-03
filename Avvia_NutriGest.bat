@@ -8,5 +8,5 @@ echo.
 echo Avvio del server locale in corso...
 cd /d "%~dp0"
 start "" http://localhost:3001
-node server/server.js
+node --watch server/server.js
 pause

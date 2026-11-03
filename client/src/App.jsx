@@ -9,6 +9,8 @@ import NewVisitModal from './components/NewVisitModal';
 import BiaView from './components/BiaView';
 import DietPlanner from './components/DietPlanner';
 import SettingsView from './components/SettingsView';
+import PopupOverlay from './components/PopupOverlay';
+import { showPopup, showConfirm } from './utils/popup';
 import { api } from './api';
 import confetti from 'canvas-confetti';
 
@@ -29,6 +31,7 @@ export default function App() {
   // Modali
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [patientToEdit, setPatientToEdit] = useState(null);
+  const [patientRefreshKey, setPatientRefreshKey] = useState(0);
   const [isGlobalVisitModalOpen, setIsGlobalVisitModalOpen] = useState(false);
   const [visitModalPatient, setVisitModalPatient] = useState(null);
 
@@ -74,41 +77,53 @@ export default function App() {
   };
 
   // Apertura modale modifica paziente
-  const handleOpenEditPatient = (p) => {
-    setPatientToEdit(p);
+  const handleOpenEditPatient = async (p) => {
+    try {
+      const freshPatient = await api.getPatient(p.id);
+      setPatientToEdit(freshPatient && !freshPatient.error ? freshPatient : p);
+    } catch {
+      setPatientToEdit(p);
+    }
     setIsPatientModalOpen(true);
   };
 
   // Salvataggio paziente (creazione o aggiornamento)
   const handleSavePatient = async (formData) => {
     try {
+      setIsPatientModalOpen(false);
       if (patientToEdit) {
         await api.updatePatient(patientToEdit.id, formData);
-        alert('Scheda paziente aggiornata con successo!');
+        showPopup('Scheda paziente aggiornata con successo!', 'success', 'Modifiche Salvate');
       } else {
-        const newPatient = await api.createPatient(formData);
+        await api.createPatient(formData);
         confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
-        alert('Nuovo paziente registrato con successo!');
+        showPopup('Nuovo paziente registrato con successo!', 'success', 'Paziente Registrato');
       }
-      setIsPatientModalOpen(false);
-      loadAllData();
+      setPatientToEdit(null);
+      setPatientRefreshKey(prev => prev + 1);
+      await loadAllData();
     } catch (e) {
-      alert('Errore salvataggio paziente: ' + e.message);
+      showPopup('Errore salvataggio paziente: ' + e.message, 'error');
     }
   };
 
   // Eliminazione paziente
   const handleDeletePatient = async (id, name) => {
-    if (confirm(`Sei sicuro di voler eliminare la cartella del paziente "${name}" e tutte le sue visite, BIA e diete?`)) {
+    const confirmed = await showConfirm(
+      `Sei sicuro di voler eliminare la cartella del paziente "${name}" e tutte le sue visite, BIA e diete?`,
+      { title: 'Elimina Paziente', confirmText: 'Elimina', danger: true }
+    );
+    if (confirmed) {
       try {
         await api.deletePatient(id);
         if (selectedPatientId === id) {
           setSelectedPatientId(null);
           setCurrentView('patients');
         }
-        loadAllData();
+        await loadAllData();
+        showPopup('Cartella paziente eliminata con successo.', 'success', 'Paziente Eliminato');
       } catch (e) {
-        alert('Errore eliminazione: ' + e.message);
+        showPopup('Errore eliminazione: ' + e.message, 'error');
       }
     }
   };
@@ -116,7 +131,7 @@ export default function App() {
   // Apertura modale nuova visita globale
   const handleOpenGlobalVisit = () => {
     if (patients.length === 0) {
-      alert('Registra prima almeno un paziente per poter inserire una visita.');
+      showPopup('Registra prima almeno un paziente per poter inserire una visita.', 'warning');
       handleOpenNewPatient();
       return;
     }
@@ -132,11 +147,11 @@ export default function App() {
     try {
       await api.addVisit(visitModalPatient.id, visitPayload);
       setIsGlobalVisitModalOpen(false);
-      loadAllData();
-      alert('Visita e parametri registrati con successo!');
+      await loadAllData();
+      showPopup('Visita e parametri registrati con successo!', 'success', 'Visita Salvata');
       handleSelectPatient(visitModalPatient.id);
     } catch (e) {
-      alert('Errore salvataggio: ' + e.message);
+      showPopup('Errore salvataggio: ' + e.message, 'error');
     }
   };
 
@@ -156,7 +171,9 @@ export default function App() {
       case 'diets':
         return { title: 'Piani Alimentari Settimanali', subtitle: 'Elaborazione schemi dietetici, copie feriali e stampa PDF' };
       case 'settings':
-        return { title: 'Impostazioni Studio & Backup', subtitle: 'Configurazione intestazione, backup database SQLite locale' };
+        return { title: 'Dati del Professionista & Studio', subtitle: 'Configurazione dati anagrafici, recapiti studio e intestazione referti/diete' };
+      case 'backup':
+        return { title: 'Backup & Gestione Database', subtitle: 'Salvataggio database SQLite locale, esportazione JSON e gestione dati' };
       default:
         return { title: 'NutriGest Studio', subtitle: '' };
     }
@@ -221,6 +238,7 @@ export default function App() {
           {currentView === 'patient-detail' && selectedPatientId && (
             <PatientDetail
               patientId={selectedPatientId}
+              refreshKey={patientRefreshKey}
               onBack={() => {
                 setSelectedPatientId(null);
                 setCurrentView('patients');
@@ -236,6 +254,7 @@ export default function App() {
               {patients.length > 0 ? (
                 <PatientDetail
                   patientId={selectedPatientId || patients[0].id}
+                  refreshKey={patientRefreshKey}
                   onBack={() => setCurrentView('dashboard')}
                   onEditPatient={handleOpenEditPatient}
                   settings={settings}
@@ -275,6 +294,7 @@ export default function App() {
               {selectedPatientId || (patients.length > 0 && patients[0].id) ? (
                 <PatientDetail
                   patientId={selectedPatientId || patients[0].id}
+                  refreshKey={patientRefreshKey}
                   onBack={() => setCurrentView('dashboard')}
                   onEditPatient={handleOpenEditPatient}
                   settings={settings}
@@ -297,9 +317,11 @@ export default function App() {
             />
           )}
 
-          {/* VISTA 7: IMPOSTAZIONI & BACKUP */}
-          {currentView === 'settings' && (
+          {/* VISTA 7: DATI PROFESSIONISTA & BACKUP DB */}
+          {(currentView === 'settings' || currentView === 'backup') && (
             <SettingsView
+              activeSection={currentView === 'backup' ? 'backup' : 'profile'}
+              onChangeSection={(sec) => setCurrentView(sec === 'backup' ? 'backup' : 'settings')}
               settings={settings}
               onSettingsUpdated={(newSettings) => setSettings(newSettings)}
               onReloadData={loadAllData}
@@ -323,6 +345,9 @@ export default function App() {
         onSave={handleSaveGlobalVisit}
         patient={visitModalPatient}
       />
+
+      {/* Popup Globale Notifiche & Conferme */}
+      <PopupOverlay />
     </div>
   );
 }

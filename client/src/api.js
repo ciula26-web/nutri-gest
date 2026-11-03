@@ -22,21 +22,44 @@ export const api = {
 
   getPatient: (id) => fetch(`${API_BASE}/patients/${id}`).then(r => r.json()),
 
-  createPatient: (data) => fetch(`${API_BASE}/patients`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  }).then(r => r.json()),
+  createPatient: async (data) => {
+    const r = await fetch(`${API_BASE}/patients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Errore creazione paziente');
+    return json;
+  },
 
-  updatePatient: (id, data) => fetch(`${API_BASE}/patients/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  }).then(r => r.json()),
+  updatePatient: async (id, data) => {
+    const r = await fetch(`${API_BASE}/patients/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Errore aggiornamento paziente');
+    return json;
+  },
 
   deletePatient: (id) => fetch(`${API_BASE}/patients/${id}`, {
     method: 'DELETE'
   }).then(r => r.json()),
+
+  uploadPrivacyPdf: async (patientId, { filename, dataBase64 }) => {
+    const r = await fetch(`${API_BASE}/patients/${patientId}/privacy-pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, dataBase64 })
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Errore salvataggio PDF privacy');
+    return json;
+  },
+
+  getPrivacyPdfUrl: (patientId) => `${API_BASE}/patients/${patientId}/privacy-pdf`,
 
   // Visite & Pesate
   getVisits: (patientId) => fetch(`${API_BASE}/patients/${patientId}/visits`).then(r => r.json()),

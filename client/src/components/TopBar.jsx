@@ -29,14 +29,14 @@ export default function TopBar({
         </a>
 
         {onNewPatient && (
-          <button onClick={onNewPatient} className="btn btn-outline-primary btn-sm">
+          <button style={{ display: 'none' }} onClick={onNewPatient} className="btn btn-outline-primary btn-sm">
             <UserPlus size={15} />
             <span>Nuovo Paziente</span>
           </button>
         )}
 
         {onNewVisit && (
-          <button onClick={onNewVisit} className="btn btn-primary btn-sm">
+          <button style={{ display: 'none' }} onClick={onNewVisit} className="btn btn-primary btn-sm">
             <Plus size={15} />
             <span>Nuova Visita / BIA</span>
           </button>

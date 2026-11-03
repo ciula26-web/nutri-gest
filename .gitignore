@@ -10,6 +10,7 @@ data/*.sqlite
 data/*.sqlite-journal
 data/*.sqlite3
 data/*.db
+data/privacy/
 !data/.gitkeep
 
 # Environment variables

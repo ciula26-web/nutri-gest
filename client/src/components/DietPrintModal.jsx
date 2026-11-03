@@ -368,7 +368,13 @@ export default function DietPrintModal({ isOpen, onClose, diet, patient, setting
   useEffect(() => {
     if (isOpen) {
       setPlanData(initializePlanData(diet, patient));
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [diet, isOpen, patient]);
 
   if (!isOpen) return null;

@@ -165,6 +165,7 @@ app.get('/api/patients', async (req, res) => {
 
       return {
         ...p,
+        questionnaire: p.questionnaire_json ? (() => { try { return JSON.parse(p.questionnaire_json); } catch { return {}; } })() : {},
         latest_weight: lastVisit ? lastVisit.weight : p.initial_weight,
         latest_bmi: lastVisit ? lastVisit.bmi : calculateBMI(p.initial_weight, p.height),
         latest_visit_date: lastVisit ? lastVisit.visit_date : null,
@@ -225,6 +226,7 @@ app.get('/api/patients/:id', async (req, res) => {
 
     res.json({
       ...patient,
+      questionnaire: patient.questionnaire_json ? (() => { try { return JSON.parse(patient.questionnaire_json); } catch { return {}; } })() : {},
       latest_weight: latestWeight,
       weight_diff_total: weightDiffTotal,
       weight_diff_last: weightDiffLast,
@@ -242,30 +244,37 @@ app.post('/api/patients', async (req, res) => {
     const {
       first_name, last_name, gender, birth_date, fiscal_code,
       phone, email, profession, address, height, initial_weight,
-      target_weight, goal_description, activity_level, allergies,
-      intolerances, pathologies, medications, lifestyle_notes,
-      food_preferences, status
+      target_weight, goal_description, activity_level, sport_type, daily_steps,
+      allergies, intolerances, pathologies, medications, lifestyle_notes,
+      food_preferences, menstrual_cycle, pregnancy_lactation, childbirth_history, menopause,
+      questionnaire, status
     } = req.body;
 
     if (!first_name || !last_name) {
       return res.status(400).json({ error: 'Nome e Cognome sono obbligatori' });
     }
 
+    const questionnaireStr = questionnaire
+      ? (typeof questionnaire === 'string' ? questionnaire : JSON.stringify(questionnaire))
+      : '{}';
+
     const result = await runQuery(`
       INSERT INTO patients (
         first_name, last_name, gender, birth_date, fiscal_code,
         phone, email, profession, address, height, initial_weight,
-        target_weight, goal_description, activity_level, allergies,
-        intolerances, pathologies, medications, lifestyle_notes,
-        food_preferences, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        target_weight, goal_description, activity_level, sport_type, daily_steps,
+        allergies, intolerances, pathologies, medications, lifestyle_notes,
+        food_preferences, menstrual_cycle, pregnancy_lactation, childbirth_history, menopause,
+        questionnaire_json, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       first_name, last_name, gender || 'F', birth_date || null, fiscal_code ? fiscal_code.toUpperCase() : '',
       phone || '', email || '', profession || '', address || '', height ? Number(height) : null,
       initial_weight ? Number(initial_weight) : null, target_weight ? Number(target_weight) : null,
-      goal_description || '', activity_level || 'moderata', allergies || '',
-      intolerances || '', pathologies || '', medications || '', lifestyle_notes || '',
-      food_preferences || '', status || 'attivo'
+      goal_description || '', activity_level || '1-2 volte a settimana', sport_type || '', daily_steps || '0 - 5.000 passi/giorno',
+      allergies || '', intolerances || '', pathologies || '', medications || '', lifestyle_notes || '',
+      food_preferences || '', menstrual_cycle || '', pregnancy_lactation || '', childbirth_history || '', menopause || '',
+      questionnaireStr, status || 'attivo'
     ]);
 
     // Se fornito il peso iniziale, crea automaticamente la prima visita
@@ -294,28 +303,37 @@ app.put('/api/patients/:id', async (req, res) => {
     const {
       first_name, last_name, gender, birth_date, fiscal_code,
       phone, email, profession, address, height, initial_weight,
-      target_weight, goal_description, activity_level, allergies,
-      intolerances, pathologies, medications, lifestyle_notes,
-      food_preferences, status
+      target_weight, goal_description, activity_level, sport_type, daily_steps,
+      allergies, intolerances, pathologies, medications, lifestyle_notes,
+      food_preferences, menstrual_cycle, pregnancy_lactation, childbirth_history, menopause,
+      questionnaire, status
     } = req.body;
+
+    const questionnaireStr = questionnaire
+      ? (typeof questionnaire === 'string' ? questionnaire : JSON.stringify(questionnaire))
+      : '{}';
 
     await runQuery(`
       UPDATE patients SET
         first_name = ?, last_name = ?, gender = ?, birth_date = ?,
         fiscal_code = ?, phone = ?, email = ?, profession = ?,
         address = ?, height = ?, initial_weight = ?, target_weight = ?,
-        goal_description = ?, activity_level = ?, allergies = ?,
-        intolerances = ?, pathologies = ?, medications = ?,
-        lifestyle_notes = ?, food_preferences = ?, status = ?,
+        goal_description = ?, activity_level = ?, sport_type = ?, daily_steps = ?,
+        allergies = ?, intolerances = ?, pathologies = ?, medications = ?,
+        lifestyle_notes = ?, food_preferences = ?,
+        menstrual_cycle = ?, pregnancy_lactation = ?, childbirth_history = ?, menopause = ?,
+        questionnaire_json = ?, status = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [
       first_name, last_name, gender, birth_date,
       fiscal_code ? fiscal_code.toUpperCase() : '', phone, email, profession,
       address, height ? Number(height) : null, initial_weight ? Number(initial_weight) : null,
-      target_weight ? Number(target_weight) : null, goal_description, activity_level, allergies,
-      intolerances, pathologies, medications, lifestyle_notes,
-      food_preferences, status, req.params.id
+      target_weight ? Number(target_weight) : null, goal_description, activity_level,
+      sport_type || '', daily_steps || '0 - 5.000 passi/giorno',
+      allergies, intolerances, pathologies, medications, lifestyle_notes,
+      food_preferences, menstrual_cycle || '', pregnancy_lactation || '', childbirth_history || '', menopause || '',
+      questionnaireStr, status, req.params.id
     ]);
 
     const updated = await getRow('SELECT * FROM patients WHERE id = ?', [req.params.id]);
@@ -327,8 +345,78 @@ app.put('/api/patients/:id', async (req, res) => {
 
 app.delete('/api/patients/:id', async (req, res) => {
   try {
+    const privacyFilePath = path.resolve(__dirname, '../data/privacy', `patient_${req.params.id}_privacy.pdf`);
+    if (fs.existsSync(privacyFilePath)) {
+      try { fs.unlinkSync(privacyFilePath); } catch (_) {}
+    }
     await runQuery('DELETE FROM patients WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Paziente eliminato con successo' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Salvataggio e Visualizzazione Documento PDF Dichiarazione Privacy Paziente
+app.post('/api/patients/:id/privacy-pdf', async (req, res) => {
+  try {
+    const { dataBase64 } = req.body;
+    if (!dataBase64) {
+      return res.status(400).json({ error: 'Nessun file PDF fornito' });
+    }
+
+    const patient = await getRow('SELECT first_name, last_name FROM patients WHERE id = ?', [req.params.id]);
+    const rawName = patient
+      ? `${patient.first_name || ''} ${patient.last_name || ''}`.trim()
+      : `${req.params.id}`;
+    const cleanPatientName = rawName
+      .replace(/[^a-zA-Z0-9À-ÿ\s_-]/g, '')
+      .trim()
+      .replace(/\s+/g, '_') || `paziente_${req.params.id}`;
+
+    const privacyDir = path.resolve(__dirname, '../data/privacy');
+    if (!fs.existsSync(privacyDir)) {
+      fs.mkdirSync(privacyDir, { recursive: true });
+    }
+
+    const cleanBase64 = dataBase64.replace(/^data:application\/pdf;base64,/i, '').replace(/^data:.*;base64,/i, '');
+    const fileBuffer = Buffer.from(cleanBase64, 'base64');
+    const filePath = path.join(privacyDir, `patient_${req.params.id}_privacy.pdf`);
+    fs.writeFileSync(filePath, fileBuffer);
+
+    const safeFilename = `privacy_${cleanPatientName}.pdf`;
+    const uploadedAt = new Date().toISOString();
+
+    await runQuery(
+      'UPDATE patients SET privacy_pdf_name = ?, privacy_pdf_date = ? WHERE id = ?',
+      [safeFilename, uploadedAt, req.params.id]
+    );
+
+    res.json({
+      success: true,
+      privacy_pdf_name: safeFilename,
+      privacy_pdf_date: uploadedAt
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/patients/:id/privacy-pdf', async (req, res) => {
+  try {
+    const patient = await getRow('SELECT first_name, last_name, privacy_pdf_name FROM patients WHERE id = ?', [req.params.id]);
+    const filePath = path.resolve(__dirname, '../data/privacy', `patient_${req.params.id}_privacy.pdf`);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Documento PDF della privacy non trovato per questo paziente' });
+    }
+
+    const cleanName = patient
+      ? `${patient.first_name || ''} ${patient.last_name || ''}`.trim().replace(/[^a-zA-Z0-9À-ÿ\s_-]/g, '').replace(/\s+/g, '_')
+      : '';
+    const fileName = (patient && patient.privacy_pdf_name) || (cleanName ? `privacy_${cleanName}.pdf` : `privacy_paziente_${req.params.id}.pdf`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+    res.sendFile(filePath);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

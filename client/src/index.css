@@ -658,6 +658,11 @@ a {
 /* ==========================================
    MODALI & POPUP
    ========================================== */
+html:has(.modal-overlay),
+body:has(.modal-overlay) {
+  overflow: hidden !important;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -668,6 +673,7 @@ a {
   justify-content: center;
   z-index: 100;
   padding: 20px;
+  overscroll-behavior: contain;
 }
 
 .modal-content {
@@ -695,6 +701,7 @@ a {
 .modal-body {
   padding: 24px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   flex: 1;
 }
 
@@ -724,6 +731,15 @@ a {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes popupProgress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
   }
 }
 
@@ -775,6 +791,7 @@ a {
   background-color: #cbd5e1;
   padding: 30px 16px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   max-height: calc(92vh - 120px);
   display: flex;
   flex-direction: column;

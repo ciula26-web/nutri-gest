@@ -26,7 +26,8 @@ export default function Sidebar({
     { id: 'weight', label: 'Andamento Peso', icon: Scale },
     { id: 'bia', label: 'Analisi BIA', icon: Activity },
     { id: 'diets', label: 'Piani Alimentari', icon: UtensilsCrossed },
-    { id: 'settings', label: 'Studio & Backup', icon: Settings }
+    { id: 'settings', label: 'Dati Professionista', icon: Settings },
+    { id: 'backup', label: 'Backup Database', icon: Database }
   ];
 
   return (
