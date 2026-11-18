@@ -130,7 +130,7 @@ const initDatabase = async () => {
   await runQuery(`
     CREATE TABLE IF NOT EXISTS bia_measurements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      visit_id INTEGER NOT NULL,
+      visit_id INTEGER,
       patient_id INTEGER NOT NULL,
       measurement_date TEXT NOT NULL,
       device_model TEXT DEFAULT 'Analizzatore BIA Vettoriale',
@@ -152,6 +152,7 @@ const initDatabase = async () => {
       visceral_fat_level REAL,
       basal_metabolic_rate REAL,
       bia_vector_notes TEXT DEFAULT '',
+      bia_params_json TEXT DEFAULT '{}',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(visit_id) REFERENCES visits(id) ON DELETE CASCADE,
       FOREIGN KEY(patient_id) REFERENCES patients(id) ON DELETE CASCADE
@@ -285,6 +286,72 @@ const initDatabase = async () => {
     }
   } catch (err) {
     console.error('Info migrazione patients activity:', err.message);
+  }
+
+  // Migrazione automatica per bia_measurements (bia_params_json e visit_id nullable)
+  try {
+    const biaCols = await getAll(`PRAGMA table_info(bia_measurements)`);
+    if (biaCols && biaCols.length > 0) {
+      if (!biaCols.some(col => col.name === 'bia_params_json')) {
+        await runQuery(`ALTER TABLE bia_measurements ADD COLUMN bia_params_json TEXT DEFAULT '{}';`);
+      }
+      const visitIdCol = biaCols.find(col => col.name === 'visit_id');
+      if (visitIdCol && visitIdCol.notnull === 1) {
+        await runQuery(`
+          CREATE TABLE IF NOT EXISTS bia_measurements_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            visit_id INTEGER,
+            patient_id INTEGER NOT NULL,
+            measurement_date TEXT NOT NULL,
+            device_model TEXT DEFAULT 'Analizzatore BIA Vettoriale',
+            resistance_rz REAL,
+            reactance_xc REAL,
+            phase_angle REAL,
+            fat_mass_kg REAL,
+            fat_mass_percent REAL,
+            fat_free_mass_kg REAL,
+            fat_free_mass_percent REAL,
+            total_body_water_lt REAL,
+            total_body_water_percent REAL,
+            extracellular_water_lt REAL,
+            extracellular_water_percent REAL,
+            intracellular_water_lt REAL,
+            intracellular_water_percent REAL,
+            body_cell_mass_kg REAL,
+            body_cell_mass_percent REAL,
+            visceral_fat_level REAL,
+            basal_metabolic_rate REAL,
+            bia_vector_notes TEXT DEFAULT '',
+            bia_params_json TEXT DEFAULT '{}',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(visit_id) REFERENCES visits(id) ON DELETE CASCADE,
+            FOREIGN KEY(patient_id) REFERENCES patients(id) ON DELETE CASCADE
+          )
+        `);
+        await runQuery(`
+          INSERT INTO bia_measurements_new (
+            id, visit_id, patient_id, measurement_date, device_model,
+            resistance_rz, reactance_xc, phase_angle, fat_mass_kg, fat_mass_percent,
+            fat_free_mass_kg, fat_free_mass_percent, total_body_water_lt, total_body_water_percent,
+            extracellular_water_lt, extracellular_water_percent, intracellular_water_lt, intracellular_water_percent,
+            body_cell_mass_kg, body_cell_mass_percent, visceral_fat_level, basal_metabolic_rate,
+            bia_vector_notes, bia_params_json, created_at
+          )
+          SELECT
+            id, visit_id, patient_id, measurement_date, device_model,
+            resistance_rz, reactance_xc, phase_angle, fat_mass_kg, fat_mass_percent,
+            fat_free_mass_kg, fat_free_mass_percent, total_body_water_lt, total_body_water_percent,
+            extracellular_water_lt, extracellular_water_percent, intracellular_water_lt, intracellular_water_percent,
+            body_cell_mass_kg, body_cell_mass_percent, visceral_fat_level, basal_metabolic_rate,
+            bia_vector_notes, COALESCE(bia_params_json, '{}'), created_at
+          FROM bia_measurements
+        `);
+        await runQuery(`DROP TABLE bia_measurements`);
+        await runQuery(`ALTER TABLE bia_measurements_new RENAME TO bia_measurements`);
+      }
+    }
+  } catch (err) {
+    console.error('Info migrazione bia_measurements:', err.message);
   }
 
   // Verifica se è necessario inserire i dati demo

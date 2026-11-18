@@ -23,8 +23,6 @@ export default function Sidebar({
   const navItems = [
     { id: 'dashboard', label: 'Panoramica', icon: LayoutDashboard },
     { id: 'patients', label: 'Pazienti', icon: Users, badge: patientsCount },
-    { id: 'weight', label: 'Andamento Peso', icon: Scale },
-    { id: 'bia', label: 'Analisi BIA', icon: Activity },
     { id: 'diets', label: 'Piani Alimentari', icon: UtensilsCrossed },
     { id: 'settings', label: 'Dati Professionista', icon: Settings },
     { id: 'backup', label: 'Backup Database', icon: Database }

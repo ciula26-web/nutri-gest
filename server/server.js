@@ -194,13 +194,24 @@ app.get('/api/patients/:id', async (req, res) => {
     `, [patient.id]);
 
     // BIA measurements
-    const biaList = await getAll(`
-      SELECT b.*, v.visit_date, v.weight as visit_weight
+    const biaRawList = await getAll(`
+      SELECT b.*, v.visit_date, v.weight as visit_weight, v.bmi as visit_bmi
       FROM bia_measurements b
-      JOIN visits v ON b.visit_id = v.id
+      LEFT JOIN visits v ON b.visit_id = v.id
       WHERE b.patient_id = ?
-      ORDER BY b.measurement_date ASC, b.id ASC
+      ORDER BY b.id ASC
     `, [patient.id]);
+
+    const biaList = biaRawList.map(b => {
+      let parsed = {};
+      if (b.bia_params_json) {
+        try { parsed = JSON.parse(b.bia_params_json); } catch (_) {}
+      }
+      return {
+        ...b,
+        params: parsed
+      };
+    });
 
     // Diete
     const diets = await getAll(`
@@ -479,35 +490,28 @@ app.post('/api/patients/:patientId/visits', async (req, res) => {
     ]);
 
     // Se sono presenti dati BIA collegati a questa visita
-    if (bia_data && (bia_data.phase_angle || bia_data.fat_mass_percent || bia_data.total_body_water_lt || bia_data.resistance_rz)) {
+    const hasBiaData = bia_data && Object.entries(bia_data).some(([k, val]) => k !== 'device_model' && val !== '' && val !== null && val !== undefined);
+    if (hasBiaData) {
+      const biaParamsObj = {
+        measurement_date: bia_data.measurement_date || visit_date || '',
+        weight: bia_data.weight !== undefined && bia_data.weight !== '' ? String(bia_data.weight) : String(weight || ''),
+        bmi: bia_data.bmi !== undefined && bia_data.bmi !== '' ? String(bia_data.bmi) : (bmi ? String(bmi) : ''),
+        ...bia_data
+      };
       await runQuery(`
         INSERT INTO bia_measurements (
           visit_id, patient_id, measurement_date, device_model,
-          resistance_rz, reactance_xc, phase_angle, fat_mass_kg, fat_mass_percent,
-          fat_free_mass_kg, fat_free_mass_percent, total_body_water_lt, total_body_water_percent,
-          extracellular_water_lt, extracellular_water_percent, intracellular_water_lt, intracellular_water_percent,
-          body_cell_mass_kg, body_cell_mass_percent, visceral_fat_level, basal_metabolic_rate, bia_vector_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          fat_mass_percent, total_body_water_lt, visceral_fat_level, bia_params_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        visitResult.id, patientId, visit_date, bia_data.device_model || 'Analizzatore BIA',
-        bia_data.resistance_rz ? Number(bia_data.resistance_rz) : null,
-        bia_data.reactance_xc ? Number(bia_data.reactance_xc) : null,
-        bia_data.phase_angle ? Number(bia_data.phase_angle) : null,
-        bia_data.fat_mass_kg ? Number(bia_data.fat_mass_kg) : null,
-        bia_data.fat_mass_percent ? Number(bia_data.fat_mass_percent) : null,
-        bia_data.fat_free_mass_kg ? Number(bia_data.fat_free_mass_kg) : null,
-        bia_data.fat_free_mass_percent ? Number(bia_data.fat_free_mass_percent) : null,
-        bia_data.total_body_water_lt ? Number(bia_data.total_body_water_lt) : null,
-        bia_data.total_body_water_percent ? Number(bia_data.total_body_water_percent) : null,
-        bia_data.extracellular_water_lt ? Number(bia_data.extracellular_water_lt) : null,
-        bia_data.extracellular_water_percent ? Number(bia_data.extracellular_water_percent) : null,
-        bia_data.intracellular_water_lt ? Number(bia_data.intracellular_water_lt) : null,
-        bia_data.intracellular_water_percent ? Number(bia_data.intracellular_water_percent) : null,
-        bia_data.body_cell_mass_kg ? Number(bia_data.body_cell_mass_kg) : null,
-        bia_data.body_cell_mass_percent ? Number(bia_data.body_cell_mass_percent) : null,
-        bia_data.visceral_fat_level ? Number(bia_data.visceral_fat_level) : null,
-        bia_data.basal_metabolic_rate ? Number(bia_data.basal_metabolic_rate) : null,
-        bia_data.bia_vector_notes || ''
+        visitResult.id,
+        patientId,
+        biaParamsObj.measurement_date || visit_date,
+        bia_data.device_model || 'Analizzatore BIA',
+        parseFloat(bia_data.fat_total) || null,
+        parseFloat(bia_data.body_water) || null,
+        parseFloat(bia_data.visceral_fat) || null,
+        JSON.stringify(biaParamsObj)
       ]);
     }
 
@@ -536,13 +540,93 @@ app.delete('/api/visits/:id', async (req, res) => {
 app.get('/api/patients/:patientId/bia', async (req, res) => {
   try {
     const list = await getAll(`
-      SELECT b.*, v.weight, v.height, v.bmi, v.visit_type
+      SELECT b.*, v.weight as visit_weight, v.height as visit_height, v.bmi as visit_bmi, v.visit_type
       FROM bia_measurements b
-      JOIN visits v ON b.visit_id = v.id
+      LEFT JOIN visits v ON b.visit_id = v.id
       WHERE b.patient_id = ?
-      ORDER BY b.measurement_date ASC, b.id ASC
+      ORDER BY b.id ASC
     `, [req.params.patientId]);
-    res.json(list);
+    const formatted = list.map(b => {
+      let parsed = {};
+      if (b.bia_params_json) {
+        try { parsed = JSON.parse(b.bia_params_json); } catch (_) {}
+      }
+      return { ...b, params: parsed };
+    });
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/patients/:patientId/bia', async (req, res) => {
+  try {
+    const patientId = req.params.patientId;
+    const biaData = req.body || {};
+    const measurementDate = biaData.measurement_date || new Date().toISOString().split('T')[0];
+
+    const result = await runQuery(`
+      INSERT INTO bia_measurements (
+        visit_id, patient_id, measurement_date, device_model,
+        fat_mass_percent, total_body_water_lt, visceral_fat_level, bia_params_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      biaData.visit_id || null,
+      patientId,
+      measurementDate,
+      biaData.device_model || 'Analizzatore BIA',
+      parseFloat(biaData.fat_total) || null,
+      parseFloat(biaData.body_water) || null,
+      parseFloat(biaData.visceral_fat) || null,
+      JSON.stringify(biaData)
+    ]);
+
+    const created = await getRow('SELECT * FROM bia_measurements WHERE id = ?', [result.id]);
+    res.status(201).json({
+      ...created,
+      params: biaData
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/bia/:id', async (req, res) => {
+  try {
+    const biaData = req.body || {};
+    const measurementDate = biaData.measurement_date || new Date().toISOString().split('T')[0];
+
+    await runQuery(`
+      UPDATE bia_measurements SET
+        measurement_date = ?,
+        fat_mass_percent = ?,
+        total_body_water_lt = ?,
+        visceral_fat_level = ?,
+        bia_params_json = ?
+      WHERE id = ?
+    `, [
+      measurementDate,
+      parseFloat(biaData.fat_total) || null,
+      parseFloat(biaData.body_water) || null,
+      parseFloat(biaData.visceral_fat) || null,
+      JSON.stringify(biaData),
+      req.params.id
+    ]);
+
+    const updated = await getRow('SELECT * FROM bia_measurements WHERE id = ?', [req.params.id]);
+    res.json({
+      ...updated,
+      params: biaData
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/bia/:id', async (req, res) => {
+  try {
+    await runQuery('DELETE FROM bia_measurements WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

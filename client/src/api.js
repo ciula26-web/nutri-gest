@@ -77,6 +77,34 @@ export const api = {
   // BIA
   getBiaMeasurements: (patientId) => fetch(`${API_BASE}/patients/${patientId}/bia`).then(r => r.json()),
   getBiaComparison: (patientId) => fetch(`${API_BASE}/patients/${patientId}/bia-comparison`).then(r => r.json()),
+  addBiaMeasurement: async (patientId, data) => {
+    const r = await fetch(`${API_BASE}/patients/${patientId}/bia`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Errore salvataggio BIA');
+    return json;
+  },
+  updateBiaMeasurement: async (id, data) => {
+    const r = await fetch(`${API_BASE}/bia/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Errore aggiornamento BIA');
+    return json;
+  },
+  deleteBiaMeasurement: async (id) => {
+    const r = await fetch(`${API_BASE}/bia/${id}`, {
+      method: 'DELETE'
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Errore eliminazione BIA');
+    return json;
+  },
 
   // Diete
   getPatientDiets: (patientId) => fetch(`${API_BASE}/patients/${patientId}/diets`).then(r => r.json()),

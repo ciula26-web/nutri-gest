@@ -20,25 +20,31 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
 
   const [showBiaSection, setShowBiaSection] = useState(false);
   const [biaData, setBiaData] = useState({
-    device_model: 'Analizzatore BIA Vettoriale',
-    resistance_rz: '',
-    reactance_xc: '',
-    phase_angle: '',
-    fat_mass_kg: '',
-    fat_mass_percent: '',
-    fat_free_mass_kg: '',
-    fat_free_mass_percent: '',
-    total_body_water_lt: '',
-    total_body_water_percent: '',
-    extracellular_water_lt: '',
-    extracellular_water_percent: '',
-    intracellular_water_lt: '',
-    intracellular_water_percent: '',
-    body_cell_mass_kg: '',
-    body_cell_mass_percent: '',
-    visceral_fat_level: '',
-    basal_metabolic_rate: '',
-    bia_vector_notes: ''
+    measurement_date: defaultDate || today,
+    weight: '',
+    bmi: '',
+    fat_total: '',
+    fat_arm_left: '',
+    fat_arm_right: '',
+    fat_leg_left: '',
+    fat_leg_right: '',
+    fat_trunk: '',
+    muscle_total: '',
+    muscle_arm_right: '',
+    muscle_arm_left: '',
+    muscle_leg_right: '',
+    muscle_leg_left: '',
+    muscle_trunk: '',
+    mq_total: '',
+    mq_arm_right: '',
+    mq_arm_left: '',
+    mq_leg_right: '',
+    mq_leg_left: '',
+    bone_mass: '',
+    visceral_fat: '',
+    metabolic_age: '',
+    body_water: '',
+    body_balance: ''
   });
 
   useEffect(() => {
@@ -326,163 +332,161 @@ export default function NewVisitModal({ isOpen, onClose, onSave, patient, defaul
               </button>
 
               {showBiaSection && (
-                <div style={{ padding: '18px', backgroundColor: 'var(--bg-surface)' }}>
+                <div style={{ padding: '18px', backgroundColor: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Dati Generali BIA: Data, Peso, IMC */}
                   <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Angolo di Fase (PhA °) *</label>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Data</label>
                       <input
-                        type="number"
-                        step="0.01"
-                        name="phase_angle"
-                        value={biaData.phase_angle}
+                        type="text"
+                        name="measurement_date"
+                        value={biaData.measurement_date}
                         onChange={handleBiaChange}
-                        placeholder="es. 6.20"
+                        placeholder="es. 18/11/2026"
                         className="form-control"
                       />
                     </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Massa Grassa (FM %)</label>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Peso</label>
                       <input
-                        type="number"
-                        step="0.1"
-                        name="fat_mass_percent"
-                        value={biaData.fat_mass_percent}
+                        type="text"
+                        name="weight"
+                        value={biaData.weight !== '' ? biaData.weight : visitData.weight}
                         onChange={handleBiaChange}
-                        placeholder="es. 24.5"
+                        placeholder="es. 68.5 kg"
                         className="form-control"
                       />
                     </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Massa Grassa (FM kg)</label>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">IMC</label>
                       <input
-                        type="number"
-                        step="0.1"
-                        name="fat_mass_kg"
-                        value={biaData.fat_mass_kg}
+                        type="text"
+                        name="bmi"
+                        value={biaData.bmi !== '' ? biaData.bmi : (currentBmi || '')}
                         onChange={handleBiaChange}
-                        placeholder="es. 16.8"
-                        className="form-control"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Massa Magra (FFM kg)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="fat_free_mass_kg"
-                        value={biaData.fat_free_mass_kg}
-                        onChange={handleBiaChange}
-                        placeholder="es. 51.6"
+                        placeholder="es. 23.7"
                         className="form-control"
                       />
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Acqua Corporea Totale (TBW litri)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="total_body_water_lt"
-                        value={biaData.total_body_water_lt}
-                        onChange={handleBiaChange}
-                        placeholder="es. 36.2"
-                        className="form-control"
-                      />
+                  {/* Grasso Corporeo (%) */}
+                  <div style={{ padding: '14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-light)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--primary)', marginBottom: '10px' }}>
+                      Grasso corporeo (%)
                     </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Acqua Extracellulare (ECW litri)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="extracellular_water_lt"
-                        value={biaData.extracellular_water_lt}
-                        onChange={handleBiaChange}
-                        placeholder="es. 16.5"
-                        className="form-control"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Massa Cellulare (BCM kg)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="body_cell_mass_kg"
-                        value={biaData.body_cell_mass_kg}
-                        onChange={handleBiaChange}
-                        placeholder="es. 24.8"
-                        className="form-control"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Grasso Viscerale (Livello 1-20)</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        name="visceral_fat_level"
-                        value={biaData.visceral_fat_level}
-                        onChange={handleBiaChange}
-                        placeholder="es. 5.5"
-                        className="form-control"
-                      />
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '10px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Totale (%)</label>
+                        <input type="text" name="fat_total" value={biaData.fat_total} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Braccio sx</label>
+                        <input type="text" name="fat_arm_left" value={biaData.fat_arm_left} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Braccio dx</label>
+                        <input type="text" name="fat_arm_right" value={biaData.fat_arm_right} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Gamba sx</label>
+                        <input type="text" name="fat_leg_left" value={biaData.fat_leg_left} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Gamba dx</label>
+                        <input type="text" name="fat_leg_right" value={biaData.fat_leg_right} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Tronco</label>
+                        <input type="text" name="fat_trunk" value={biaData.fat_trunk} onChange={handleBiaChange} className="form-control" />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Resistenza Rz (Ohm)</label>
-                      <input
-                        type="number"
-                        name="resistance_rz"
-                        value={biaData.resistance_rz}
-                        onChange={handleBiaChange}
-                        placeholder="es. 580"
-                        className="form-control"
-                      />
+                  {/* Massa Muscolare (kg) */}
+                  <div style={{ padding: '14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-light)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--primary)', marginBottom: '10px' }}>
+                      Massa muscolare (kg)
                     </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Reattanza Xc (Ohm)</label>
-                      <input
-                        type="number"
-                        name="reactance_xc"
-                        value={biaData.reactance_xc}
-                        onChange={handleBiaChange}
-                        placeholder="es. 58"
-                        className="form-control"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Metabolismo Basale (BMR kcal)</label>
-                      <input
-                        type="number"
-                        name="basal_metabolic_rate"
-                        value={biaData.basal_metabolic_rate}
-                        onChange={handleBiaChange}
-                        placeholder="es. 1420"
-                        className="form-control"
-                      />
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '10px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Totale (kg)</label>
+                        <input type="text" name="muscle_total" value={biaData.muscle_total} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Braccio dx</label>
+                        <input type="text" name="muscle_arm_right" value={biaData.muscle_arm_right} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Braccio sx</label>
+                        <input type="text" name="muscle_arm_left" value={biaData.muscle_arm_left} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Gamba dx</label>
+                        <input type="text" name="muscle_leg_right" value={biaData.muscle_leg_right} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Gamba sx</label>
+                        <input type="text" name="muscle_leg_left" value={biaData.muscle_leg_left} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Tronco</label>
+                        <input type="text" name="muscle_trunk" value={biaData.muscle_trunk} onChange={handleBiaChange} className="form-control" />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Note Vettoriali BIVA / Valutazione Idratazione</label>
-                    <textarea
-                      rows={2}
-                      name="bia_vector_notes"
-                      value={biaData.bia_vector_notes}
-                      onChange={handleBiaChange}
-                      placeholder="es. Vettore centrato nell'ellisse di confidenza al 50%. Normoidratazione e buona massa cellulare."
-                      className="form-control"
-                    />
+                  {/* Qualità Massa Muscolare (MQ) */}
+                  <div style={{ padding: '14px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-light)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--primary)', marginBottom: '10px' }}>
+                      Qualità massa muscolare (MQ)
+                    </div>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '10px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Totale (MQ)</label>
+                        <input type="text" name="mq_total" value={biaData.mq_total} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Braccio dx</label>
+                        <input type="text" name="mq_arm_right" value={biaData.mq_arm_right} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Braccio sx</label>
+                        <input type="text" name="mq_arm_left" value={biaData.mq_arm_left} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Gamba dx</label>
+                        <input type="text" name="mq_leg_right" value={biaData.mq_leg_right} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Gamba sx</label>
+                        <input type="text" name="mq_leg_left" value={biaData.mq_leg_left} onChange={handleBiaChange} className="form-control" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Altri Parametri BIA */}
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Massa ossea</label>
+                      <input type="text" name="bone_mass" value={biaData.bone_mass} onChange={handleBiaChange} className="form-control" />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Grasso viscerale</label>
+                      <input type="text" name="visceral_fat" value={biaData.visceral_fat} onChange={handleBiaChange} className="form-control" />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Età metabolica</label>
+                      <input type="text" name="metabolic_age" value={biaData.metabolic_age} onChange={handleBiaChange} className="form-control" />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Acqua corporea</label>
+                      <input type="text" name="body_water" value={biaData.body_water} onChange={handleBiaChange} className="form-control" />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Equilibrio del corpo</label>
+                      <input type="text" name="body_balance" value={biaData.body_balance} onChange={handleBiaChange} className="form-control" />
+                    </div>
                   </div>
                 </div>
               )}

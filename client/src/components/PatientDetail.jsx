@@ -677,7 +677,11 @@ export default function PatientDetail({
           ========================================== */}
       {activeTab === 'bia' && (
         <div>
-          <BiaView biaList={patient.bia_measurements || []} patient={patient} />
+          <BiaView
+            biaList={patient.bia_measurements || []}
+            patient={patient}
+            onRefresh={loadPatientData}
+          />
         </div>
       )}
 
